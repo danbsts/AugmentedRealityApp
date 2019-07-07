@@ -16,14 +16,12 @@
     <ClCompile Include="..\Sources\main.cpp" />
     <ClCompile Include="..\Sources\renderer.cpp" />
     <ClCompile Include="..\Sources\tracker.cpp" />
-    <ClCompile Include="settings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Include\calibration.h" />
     <ClInclude Include="..\Include\loader.h" />
     <ClInclude Include="..\Include\renderer.h" />
     <ClInclude Include="..\Include\tracker.h" />
-    <ClInclude Include="settings.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
