@@ -16,18 +16,31 @@ using namespace std;
 class Tracker {
 public:
 
+
+	void getCameraSettings(Mat& cameraMatrix, Mat& distCoefficients) {
+		FileStorage fs("out_camera_data.xml", FileStorage::READ);
+		fs["Camera_Matrix"] >> cameraMatrix;
+		fs["Distortion_Coefficients"] >> distCoefficients;
+	}
+
 	void track(const cv::Mat& input, cv::Mat& rvec, cv::Mat& tvec);
-	void track() {
+	int track(string& filename, time_t& start, time_t& end) {
+		Mat cameraMatrix, distCoef;
+		getCameraSettings(cameraMatrix, distCoef);
 		VideoCapture cap(0);
 		Mat frame;
 		int count = 0;
 		//Mat img1 = imread("box.png", IMREAD_GRAYSCALE);
-		Mat imginha = imread("box.png");
+		Mat imginha = imread(filename+".png");
 		flip(imginha, imginha, 1);
 		Mat img1;
 		cvtColor(imginha, img1, CV_BGR2GRAY);
-
+		int cont = 0;
+		time(&start);
 		while (cap.read(frame)) {
+			cont++;
+			Mat aux = frame.clone();
+			undistort(aux, frame, cameraMatrix, distCoef);
 			Mat greyMat;
 			flip(frame, frame, 1);
 			cvtColor(frame, greyMat, CV_BGR2GRAY);
@@ -47,6 +60,11 @@ public:
 			descriptor->compute(greyMat, keypoints_2, descriptors_2);
 
 			Mat outimg1;
+			if (keypoints_1.empty() || keypoints_2.empty()) {
+				imshow("Projeto 2 PG", frame);
+				waitKey(1);
+				continue;
+			}
 			drawKeypoints(img1, keypoints_1, outimg1, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
 
 			vector<DMatch> matches;
@@ -111,7 +129,13 @@ public:
 				scene_corners[0] + Point2f((float)img1.cols, 0), Scalar(0, 255, 0), 4);
 
 			imshow("Projeto 2 PG", img_goodmatch);
-			waitKey(1);
+			//waitKey(1);
+			char c = (char)waitKey(1);
+			if (c == 27 || c == 'q' || c == 'Q') {
+				time(&end);
+				destroyAllWindows();
+				return cont;
+			}
 		}
 	}
 

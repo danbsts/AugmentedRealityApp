@@ -232,8 +232,9 @@ enum { DETECTION = 0, CAPTURING = 1, CALIBRATED = 2 };
 bool runCalibrationAndSave(Settings& s, Size imageSize, Mat& cameraMatrix, Mat& distCoeffs,
 	vector<vector<Point2f> > imagePoints);
 
-void calibrate()
+int calibrate()
 {
+	time_t start, end;
 	help();
 	Settings s;
 	const string inputSettingsFile = "default.xml";
@@ -241,7 +242,7 @@ void calibrate()
 	if (!fs.isOpened())
 	{
 		cout << "Could not open the configuration file: \"" << inputSettingsFile << "\"" << endl;
-		return;
+		return 0;
 	}
 	fs["Settings"] >> s;
 	fs.release();                                         // close Settings file
@@ -249,7 +250,7 @@ void calibrate()
 	if (!s.goodInput)
 	{
 		cout << "Invalid input detected. Application stopping. " << endl;
-		return;
+		return 0;
 	}
 
 	vector<vector<Point2f> > imagePoints;
@@ -259,13 +260,15 @@ void calibrate()
 	clock_t prevTimestamp = 0;
 	const Scalar RED(0, 0, 255), GREEN(0, 255, 0);
 	const char ESC_KEY = 27;
-
+	int cont = 0;
+	time(&start);
 	while (true)
 	{
 		Mat view;
 		bool blinkOutput = false;
 
 		view = s.nextImage();
+		cont++;
 
 		//-----  If no more image, or got enough, then stop calibration and show result -------------
 		if (mode == CAPTURING && imagePoints.size() >= (unsigned)s.nrFrames)
@@ -360,8 +363,10 @@ void calibrate()
 		imshow("Image View", view);
 		char key = (char)waitKey(s.inputCapture.isOpened() ? 50 : s.delay);
 
-		if (key == ESC_KEY)
+		if (key == ESC_KEY) {
+			destroyAllWindows();
 			break;
+		}
 
 		if (key == 'u' && mode == CALIBRATED)
 			s.showUndistorsed = !s.showUndistorsed;
@@ -389,12 +394,18 @@ void calibrate()
 			remap(view, rview, map1, map2, INTER_LINEAR);
 			imshow("Image View", rview);
 			char c = (char)waitKey();
-			if (c == ESC_KEY || c == 'q' || c == 'Q')
+			if (c == ESC_KEY || c == 'q' || c == 'Q') {
+				destroyAllWindows();
 				break;
+			}
 		}
 	}
-
-
+	time(&end);
+	double seconds = difftime(end, start);
+	cout << "Time taken : " << seconds << " seconds" << endl;
+	cont = cont / seconds;
+	cout << "Estimated frames per second : " << cont << endl;
+	return cont;
 }
 
 static double computeReprojectionErrors(const vector<vector<Point3f> >& objectPoints,
